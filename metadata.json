@@ -1,0 +1,6 @@
+{
+  "name": "Party Ledger Module",
+  "description": "Enterprise-grade financial party ledger and BI reporting system for service businesses, featuring global multi-currency support, maker-checker workflows, unified client/vendor profiles, and comprehensive analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
