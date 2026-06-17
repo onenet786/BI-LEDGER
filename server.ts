@@ -4,7 +4,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import pg from 'pg';
 import { fileURLToPath } from 'url';
-import { defaultTenant, seedParties, seedTransactions, seedAuditLogs } from './src/seedData.ts';
+import { defaultTenant, seedParties, seedTransactions, seedAuditLogs, seedUsers } from './src/seedData.ts';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +25,7 @@ let fallbackData = {
   parties: seedParties,
   transactions: seedTransactions,
   auditLogs: seedAuditLogs,
+  users: seedUsers,
 };
 
 // PostgreSQL connection config
@@ -140,6 +141,14 @@ async function initDb() {
         details TEXT,
         ip_address VARCHAR
       );
+
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR PRIMARY KEY,
+        username VARCHAR UNIQUE,
+        password VARCHAR,
+        role VARCHAR,
+        name VARCHAR
+      );
     `);
 
     console.log('PostgreSQL database tables verified/created successfully.');
@@ -242,6 +251,18 @@ async function initDb() {
         );
       }
     }
+
+    const usersCheck = await pool.query('SELECT COUNT(*) FROM users');
+    if (parseInt(usersCheck.rows[0].count) === 0) {
+      console.log('Seeding default users...');
+      for (const u of seedUsers) {
+        await pool.query(
+          `INSERT INTO users (id, username, password, role, name)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [u.id, u.username, u.password, u.role, u.name]
+        );
+      }
+    }
     console.log('PostgreSQL database initialization completed successfully!');
   } catch (err) {
     console.error('Failed to initialize PostgreSQL database. Falling back to in-memory database mode.');
@@ -264,6 +285,7 @@ app.get('/api/sync', async (req, res) => {
       parties: fallbackData.parties,
       transactions: fallbackData.transactions,
       auditLogs: fallbackData.auditLogs,
+      users: fallbackData.users,
       dbInfo: {
         connected: false,
         host: 'N/A',
@@ -279,6 +301,7 @@ app.get('/api/sync', async (req, res) => {
     const partiesRes = await pool.query('SELECT * FROM parties');
     const txRes = await pool.query('SELECT * FROM transactions');
     const logsRes = await pool.query('SELECT * FROM audit_logs ORDER BY timestamp DESC');
+    const usersRes = await pool.query('SELECT * FROM users');
 
     // map fields back to frontend structure
     const settings = settingsRes.rows[0] ? {
@@ -349,7 +372,15 @@ app.get('/api/sync', async (req, res) => {
       ipAddress: row.ip_address,
     }));
 
-    res.json({ settings, parties, transactions, auditLogs, dbInfo });
+    const users = usersRes.rows.map(row => ({
+      id: row.id,
+      username: row.username,
+      password: row.password,
+      role: row.role,
+      name: row.name,
+    }));
+
+    res.json({ settings, parties, transactions, auditLogs, users, dbInfo });
   } catch (err: any) {
     console.error('Error fetching sync data:', err);
     res.status(500).json({ error: err.message });
@@ -540,6 +571,7 @@ app.post('/api/reset', async (req, res) => {
       parties: seedParties,
       transactions: seedTransactions,
       auditLogs: seedAuditLogs,
+      users: seedUsers,
     };
     return res.json({ success: true });
   }
@@ -633,10 +665,114 @@ app.post('/api/reset', async (req, res) => {
       );
     }
 
+    await pool.query('DELETE FROM users');
+    for (const u of seedUsers) {
+      await pool.query(
+        `INSERT INTO users (id, username, password, role, name)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [u.id, u.username, u.password, u.role, u.name]
+      );
+    }
+
     res.json({ success: true });
   } catch (err: any) {
     console.error('Error resetting database:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/users
+app.get('/api/users', async (req, res) => {
+  if (useFallback || !pool) {
+    return res.json(fallbackData.users);
+  }
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows.map(r => ({
+      id: r.id,
+      username: r.username,
+      password: r.password,
+      role: r.role,
+      name: r.name,
+    })));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/users
+app.post('/api/users', async (req, res) => {
+  const user = req.body;
+  if (useFallback || !pool) {
+    const idx = fallbackData.users.findIndex(u => u.id === user.id);
+    if (idx !== -1) {
+      fallbackData.users[idx] = user;
+    } else {
+      fallbackData.users.push(user);
+    }
+    return res.json({ success: true });
+  }
+  try {
+    await pool.query(
+      `INSERT INTO users (id, username, password, role, name)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (id) DO UPDATE SET
+         username = $2,
+         password = $3,
+         role = $4,
+         name = $5`,
+      [user.id, user.username, user.password, user.role, user.name]
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/users/:id
+app.delete('/api/users/:id', async (req, res) => {
+  const id = req.params.id;
+  if (useFallback || !pool) {
+    fallbackData.users = fallbackData.users.filter(u => u.id !== id);
+    return res.json({ success: true });
+  }
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/login
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (useFallback || !pool) {
+    const user = fallbackData.users.find(u => u.username === username && u.password === password);
+    if (user) {
+      return res.json({ success: true, user });
+    } else {
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+  }
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [username, password]);
+    if (result.rows[0]) {
+      const u = result.rows[0];
+      res.json({
+        success: true,
+        user: {
+          id: u.id,
+          username: u.username,
+          role: u.role,
+          name: u.name,
+        }
+      });
+    } else {
+      res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+  } catch (err: any) {
+    res.status(401).json({ success: false, error: 'Invalid credentials' });
   }
 });
 

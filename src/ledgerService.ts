@@ -3,14 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TenantSettings, Party, Transaction, AuditLog, TransactionType } from './types';
-import { defaultTenant, seedParties, seedTransactions, seedAuditLogs } from './seedData';
+import { TenantSettings, Party, Transaction, AuditLog, TransactionType, User } from './types';
+import { defaultTenant, seedParties, seedTransactions, seedAuditLogs, seedUsers } from './seedData';
 
 // Storage keys
 const SETTINGS_KEY = 'party_ledger_tenant_settings';
 const PARTIES_KEY = 'party_ledger_parties';
 const TRANSACTIONS_KEY = 'party_ledger_transactions';
 const AUDIT_LOGS_KEY = 'party_ledger_audit_logs';
+const USERS_KEY = 'party_ledger_users';
+const CURRENT_USER_KEY = 'party_ledger_current_user';
 
 export async function syncWithServer(): Promise<void> {
   try {
@@ -21,11 +23,31 @@ export async function syncWithServer(): Promise<void> {
     localStorage.setItem(PARTIES_KEY, JSON.stringify(data.parties));
     localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(data.transactions));
     localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(data.auditLogs));
+    localStorage.setItem(USERS_KEY, JSON.stringify(data.users || []));
     if (data.dbInfo) {
       localStorage.setItem('party_ledger_db_info', JSON.stringify(data.dbInfo));
     }
   } catch (err) {
     console.error('Failed to sync with PostgreSQL server:', err);
+  }
+}
+
+export function getCurrencySymbol(code?: string): string {
+  let currencyCode = code;
+  if (!currencyCode) {
+    try {
+      currencyCode = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}').baseCurrency || 'USD';
+    } catch (e) {
+      currencyCode = 'USD';
+    }
+  }
+  switch (currencyCode) {
+    case 'PKR': return 'Rs ';
+    case 'EUR': return '€';
+    case 'AED': return 'د.إ ';
+    case 'USD':
+    default:
+      return '$';
   }
 }
 
@@ -43,6 +65,7 @@ export function initializeDatabase(forceReset = false) {
     localStorage.setItem(PARTIES_KEY, JSON.stringify(seedParties));
     localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(seedTransactions));
     localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(seedAuditLogs));
+    localStorage.setItem(USERS_KEY, JSON.stringify(seedUsers));
     fetch('/api/reset', { method: 'POST' }).catch(console.error);
     return true;
   }
@@ -51,6 +74,7 @@ export function initializeDatabase(forceReset = false) {
     localStorage.setItem(PARTIES_KEY, JSON.stringify(seedParties));
     localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(seedTransactions));
     localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(seedAuditLogs));
+    localStorage.setItem(USERS_KEY, JSON.stringify(seedUsers));
     return true;
   }
   return false;
@@ -953,4 +977,87 @@ export function getLedgerReportData(reportType: string, options: {
     default:
       return filteredTxs;
   }
+}
+
+export function getUsers(): User[] {
+  initializeDatabase();
+  try {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveUser(user: User) {
+  const users = getUsers();
+  const idx = users.findIndex(u => u.id === user.id);
+  if (idx !== -1) {
+    users[idx] = user;
+  } else {
+    users.push(user);
+  }
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  fetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user),
+  }).catch(console.error);
+}
+
+export function deleteUser(id: string) {
+  const users = getUsers().filter(u => u.id !== id);
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  fetch(`/api/users/${id}`, {
+    method: 'DELETE',
+  }).catch(console.error);
+}
+
+export async function loginUser(usernameInput: string, passwordInput: string): Promise<User> {
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: usernameInput, password: passwordInput }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Invalid credentials');
+    }
+    const data = await res.json();
+    if (data.success && data.user) {
+      setCurrentUser(data.user);
+      return data.user;
+    }
+    throw new Error('Authentication failed');
+  } catch (err: any) {
+    // local fallback check
+    const users = getUsers();
+    const matched = users.find(u => u.username === usernameInput && u.password === passwordInput);
+    if (matched) {
+      const cleanedUser = { id: matched.id, username: matched.username, role: matched.role, name: matched.name };
+      setCurrentUser(cleanedUser);
+      return cleanedUser;
+    }
+    throw new Error(err.message || 'Invalid username or password');
+  }
+}
+
+export function getCurrentUser(): User | null {
+  try {
+    return JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setCurrentUser(user: User | null) {
+  if (user) {
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+}
+
+export function logoutUser() {
+  setCurrentUser(null);
 }

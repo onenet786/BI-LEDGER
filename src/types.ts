@@ -164,3 +164,12 @@ export interface AuditLog {
   details: string;
   ipAddress: string;
 }
+
+export interface User {
+  id: string;
+  username: string;
+  password?: string;
+  role: string;
+  name: string;
+}
+

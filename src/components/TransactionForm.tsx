@@ -8,7 +8,8 @@ import {
   getParties, 
   getTenantSettings, 
   createTransaction, 
-  getTransactions 
+  getTransactions,
+  getCurrencySymbol
 } from '../ledgerService';
 import { Party, Branch, CustomFieldDefinition, TransactionType } from '../types';
 import { 
@@ -175,7 +176,7 @@ export default function TransactionForm({
       const result = createTransaction(transactionPayload, username);
 
       if (result.status === 'pending_approval') {
-        alert(`Maker-Checker Queue: Created entry representing $${calculatedBaseEquivalent.toFixed(2)} Base value. Due to the amount exceeding the approval threshold of $${settings.approvalThreshold}, this has been successfully sent to the Checker Authorization Queue.`);
+        alert(`Maker-Checker Queue: Created entry representing ${getCurrencySymbol()}${calculatedBaseEquivalent.toFixed(2)} Base value. Due to the amount exceeding the approval threshold of ${getCurrencySymbol()}${settings.approvalThreshold}, this has been successfully sent to the Checker Authorization Queue.`);
       }
 
       triggerRefresh();
@@ -224,7 +225,7 @@ export default function TransactionForm({
             </select>
             {selectedParty && (
               <span className="text-[10px] text-zinc-500 block mt-1">
-                Risk Rank: <strong className="text-zinc-650">{selectedParty.customFields['party-risk-rating'] || 'Medium'}</strong> | Limit Headroom: ${selectedParty.creditLimit.toLocaleString()}
+                Risk Rank: <strong className="text-zinc-650">{selectedParty.customFields['party-risk-rating'] || 'Medium'}</strong> | Limit Headroom: {getCurrencySymbol()}{selectedParty.creditLimit.toLocaleString()}
               </span>
             )}
           </div>
@@ -335,7 +336,7 @@ export default function TransactionForm({
                 >
                   <option value="">-- Select Milestone --</option>
                   {selectedParty.projects.find(p => p.id === projectId)?.milestones.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} (${m.amount.toLocaleString()})</option>
+                    <option key={m.id} value={m.id}>{m.name} ({getCurrencySymbol()}{m.amount.toLocaleString()})</option>
                   ))}
                 </select>
               </div>
@@ -397,7 +398,7 @@ export default function TransactionForm({
           <div>
             <span className="text-zinc-500 font-medium">Estimated Consolidated Base Value:</span>
             <span className="text-xs font-bold text-zinc-900 ml-1">
-              ${calculatedBaseEquivalent.toLocaleString(undefined, { minimumFractionDigits: 2 })} USD
+              {getCurrencySymbol()}{calculatedBaseEquivalent.toLocaleString(undefined, { minimumFractionDigits: 2 })} {settings.baseCurrency}
             </span>
           </div>
           <div>
@@ -430,8 +431,8 @@ export default function TransactionForm({
             {tdsPercent > 0 && (
               <div className="text-right text-[10px] font-semibold bg-white p-2 border rounded">
                 <span className="text-zinc-400 uppercase font-mono tracking-wider block">Withheld TDS Equivalent</span>
-                <span className="text-red-600 block text-xs font-bold">${calculatedTDSAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                <span className="text-green-600 block mt-0.5">Net Cash Remitted: ${remittedAmountBase.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-red-655 block text-xs font-bold">{getCurrencySymbol()}{calculatedTDSAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-green-600 block mt-0.5">Net Cash Remitted: {getCurrencySymbol()}{remittedAmountBase.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
             )}
           </div>

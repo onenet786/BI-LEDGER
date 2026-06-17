@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getTenantSettings, saveTenantSettings, getDbInfo } from '../ledgerService';
-import { TenantSettings, Branch, CustomFieldDefinition } from '../types';
+import { getTenantSettings, saveTenantSettings, getDbInfo, getUsers, saveUser, deleteUser } from '../ledgerService';
+import { TenantSettings, Branch, CustomFieldDefinition, User } from '../types';
 import { 
   Settings, 
   Map, 
@@ -19,7 +19,8 @@ import {
   Wrench,
   Lock,
   DollarSign,
-  Database
+  Database,
+  Users
 } from 'lucide-react';
 
 interface TenantSettingsProps {
@@ -36,7 +37,7 @@ export default function TenantSettingsComponent({
   const [settings, setSettings] = useState<TenantSettings | null>(null);
 
   // Sub-tabs in Settings
-  const [subTab, setSubTab] = useState<'general' | 'numbering' | 'branches' | 'custom_fields'>('general');
+  const [subTab, setSubTab] = useState<'general' | 'numbering' | 'branches' | 'custom_fields' | 'users'>('general');
 
   // Input States for additions
   const [newBranch, setNewBranch] = useState({ name: '', code: '' });
@@ -47,8 +48,17 @@ export default function TenantSettingsComponent({
   const [newFieldOptions, setNewFieldOptions] = useState('');
   const [newFieldTarget, setNewFieldTarget] = useState<'party' | 'transaction'>('party');
 
+  // User list and User forms state
+  const [usersList, setUsersList] = useState<User[]>([]);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [userUsername, setUserUsername] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userPassword, setUserPassword] = useState('');
+  const [userRole, setUserRole] = useState('Data Entry Operator');
+
   useEffect(() => {
     setSettings(getTenantSettings());
+    setUsersList(getUsers());
   }, [refreshTrigger]);
 
   if (!settings) return null;
@@ -140,6 +150,51 @@ export default function TenantSettingsComponent({
     triggerRefresh();
   };
 
+  // User form submit
+  const handleSaveUserSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userUsername || !userName || !userPassword) {
+      alert('All user fields (username, name, password) are required.');
+      return;
+    }
+
+    const payload: User = {
+      id: editUserId || 'u-' + Date.now(),
+      username: userUsername.trim().toLowerCase(),
+      password: userPassword,
+      role: userRole,
+      name: userName.trim(),
+    };
+
+    saveUser(payload);
+    
+    // clear form states
+    setEditUserId(null);
+    setUserUsername('');
+    setUserName('');
+    setUserPassword('');
+    setUserRole('Data Entry Operator');
+    
+    triggerRefresh();
+    alert('User profile saved and settings synchronized.');
+  };
+
+  const handleEditUserClick = (u: User) => {
+    setEditUserId(u.id);
+    setUserUsername(u.username);
+    setUserName(u.name);
+    setUserPassword(u.password || '');
+    setUserRole(u.role);
+  };
+
+  const handleDeleteUserClick = (id: string) => {
+    if (confirm('Are you sure you want to delete this user profile?')) {
+      deleteUser(id);
+      triggerRefresh();
+      alert('User deleted.');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="border-b border-zinc-200 pb-3 flex items-center justify-between">
@@ -160,6 +215,7 @@ export default function TenantSettingsComponent({
             { id: 'numbering', label: 'Document Numbering series', icon: FileCode },
             { id: 'branches', label: 'Branches Setup Register', icon: Building },
             { id: 'custom_fields', label: 'Custom Field Builder Schema', icon: Wrench },
+            { id: 'users', label: 'User & Role Management', icon: Users },
           ].map(sb => {
             const Icon = sb.icon;
             const isSel = subTab === sb.id;
@@ -515,6 +571,142 @@ export default function TenantSettingsComponent({
                         >
                           <Trash2 size={12} />
                         </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* --- PANEL SUB-TAB: USERS MANAGEMENT --- */}
+          {subTab === 'users' && (
+            <div className="space-y-4 text-xs">
+              <h3 className="font-semibold text-sm text-zinc-900 pb-2 border-b">User Session Registry & Maker-Checker Roles</h3>
+              <p className="text-[10px] text-zinc-500 leading-relaxed">
+                Add workspace accounts, configure passwords, and assign system access permissions. The Maker-Checker security validation maps strictly back to the roles defined here.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* Form to create/edit users */}
+                <form onSubmit={handleSaveUserSubmit} className="bg-zinc-50 border p-4 rounded-lg space-y-3">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">
+                    {editUserId ? 'Modify User Profile' : 'Register New User'}
+                  </span>
+                  
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Username (Login ID) *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      className="w-full p-2 bg-white border border-zinc-200 rounded text-xs lowercase font-mono font-semibold"
+                      placeholder="e.g. jsmith"
+                      value={userUsername}
+                      onChange={(e) => setUserUsername(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Full Legal Name *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      className="w-full p-2 bg-white border border-zinc-200 rounded text-xs font-semibold"
+                      placeholder="e.g. John Smith"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Account Password *</label>
+                    <input 
+                      type="password" 
+                      required 
+                      className="w-full p-2 bg-white border border-zinc-200 rounded text-xs font-mono"
+                      placeholder="••••••••"
+                      value={userPassword}
+                      onChange={(e) => setUserPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Authorized Access Persona *</label>
+                    <select
+                      className="w-full p-2 bg-white border border-zinc-200 rounded text-xs font-bold text-zinc-800"
+                      value={userRole}
+                      onChange={(e) => setUserRole(e.target.value)}
+                    >
+                      <option value="Super Admin">Super Admin (Continuous control)</option>
+                      <option value="Finance Manager">Finance Manager (Checker auth)</option>
+                      <option value="Data Entry Operator">Data Entry Operator (Maker draft)</option>
+                      <option value="Auditor / Read-Only">Auditor / Read-Only (Auditable locks)</option>
+                      <option value="Client Portal User">Client Portal User (Isolated Acme)</option>
+                      <option value="Executive / C-Suite">Executive / C-Suite (BI Widgets)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex gap-1.5 pt-1">
+                    <button 
+                      id="btn-save-user-submit"
+                      type="submit" 
+                      className="flex-1 py-2 bg-zinc-950 text-white rounded text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      {editUserId ? 'Apply Changes' : 'Save User Account'}
+                    </button>
+                    {editUserId && (
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setEditUserId(null);
+                          setUserUsername('');
+                          setUserName('');
+                          setUserPassword('');
+                          setUserRole('Data Entry Operator');
+                        }}
+                        className="px-2.5 py-2 bg-zinc-200 text-zinc-800 rounded text-xs font-bold hover:bg-zinc-300 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+
+                {/* List of active users */}
+                <div className="md:col-span-2 space-y-2 max-h-[350px] overflow-y-auto">
+                  {usersList.length === 0 ? (
+                    <p className="p-4 border text-center border-dashed rounded text-zinc-400">Zero active users registered.</p>
+                  ) : (
+                    usersList.map(u => (
+                      <div key={u.id} className="p-3 bg-zinc-50 rounded border border-zinc-200 flex items-center justify-between text-xs hover:bg-zinc-100 transition-colors">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <strong className="text-zinc-900 font-bold text-xs">{u.name}</strong>
+                            <span className="text-[10px] text-zinc-400 font-mono font-medium">@{u.username}</span>
+                          </div>
+                          <span className="bg-zinc-900 text-white text-[9px] font-bold px-2 py-0.5 rounded-full inline-block mt-1.5 uppercase font-mono">
+                            {u.role}
+                          </span>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleEditUserClick(u)}
+                            className="px-2.5 py-1.5 bg-white border border-zinc-300 hover:border-zinc-500 rounded text-zinc-800 font-bold transition-all cursor-pointer text-[10px]"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUserClick(u.id)}
+                            className="p-1.5 px-2.5 bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}

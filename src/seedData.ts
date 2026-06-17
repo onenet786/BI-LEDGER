@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TenantSettings, Party, Transaction, AuditLog } from './types';
+import { TenantSettings, Party, Transaction, AuditLog, User } from './types';
 
 export const defaultTenant: TenantSettings = {
   id: 'tenant-1',
@@ -695,3 +695,13 @@ export const seedAuditLogs: AuditLog[] = [
     ipAddress: '192.168.12.98',
   },
 ];
+
+export const seedUsers: User[] = [
+  { id: 'u-1', username: 'admin', password: 'admin786', role: 'Super Admin', name: 'Super Admin User' },
+  { id: 'u-2', username: 'manager', password: 'manager786', role: 'Finance Manager', name: 'Finance Manager Accountant' },
+  { id: 'u-3', username: 'operator', password: 'operator786', role: 'Data Entry Operator', name: 'Data Entry Operator' },
+  { id: 'u-4', username: 'auditor', password: 'auditor786', role: 'Auditor / Read-Only', name: 'External Audit Inspector' },
+  { id: 'u-5', username: 'client', password: 'client786', role: 'Client Portal User', name: 'Acme Corporate Agent' },
+  { id: 'u-6', username: 'executive', password: 'executive786', role: 'Executive / C-Suite', name: 'Executive CFO' }
+];
+

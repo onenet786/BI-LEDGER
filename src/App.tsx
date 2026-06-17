@@ -12,14 +12,17 @@ import {
   initializeDatabase,
   getTenantSettings,
   syncWithServer,
-  getDbInfo
+  getDbInfo,
+  getCurrentUser,
+  logoutUser
 } from './ledgerService';
-import { Party, Transaction, AuditLog, TenantSettings } from './types';
+import { Party, Transaction, AuditLog, TenantSettings, User } from './types';
 import Dashboard from './components/Dashboard';
 import PartyProfile from './components/PartyProfile';
 import TransactionForm from './components/TransactionForm';
 import Reports from './components/Reports';
 import TenantSettingsComponent from './components/TenantSettings';
+import Login from './components/Login';
 
 import { 
   BookOpen, 
@@ -39,16 +42,30 @@ import {
   Briefcase,
   Layers,
   Search,
-  CheckCircle,
-  HelpCircle,
-  UserCheck
+  CheckCircle, 
+  HelpCircle, 
+  UserCheck,
+  LogOut
 } from 'lucide-react';
 
 export default function App() {
+  // Auth state management
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
   // Database Initializer
   useEffect(() => {
     async function init() {
       await syncWithServer();
+      const user = getCurrentUser();
+      if (user) {
+        setCurrentUser(user);
+        setActiveRole(user.role);
+        setUsername(user.name);
+        if (user.role === 'Client Portal User') {
+          setActiveTab('directory');
+          setDrilldownPartyId('p-acme');
+        }
+      }
       triggerRefresh();
     }
     init();
@@ -117,6 +134,15 @@ export default function App() {
     }
   };
 
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    setActiveRole('Super Admin');
+    setUsername('Super Admin User');
+    setActiveTab('dashboard');
+    setDrilldownPartyId(null);
+  };
+
   const clearDatabaseSim = () => {
     if (window.confirm('Are you absolutely sure you want to reset the entire database workspace? All manually posted ledger entries, custom branches, and fields will be cleared and replaced with fresh, mathematically aligned seed values.')) {
       initializeDatabase(true);
@@ -170,6 +196,21 @@ export default function App() {
 
   // Compute stats for alert bell markers
   const pendingApprovalsCount = transactions.filter(t => t.status === 'pending_approval').length;
+
+  if (!currentUser) {
+    return <Login onSuccess={(u) => {
+      setCurrentUser(u);
+      setActiveRole(u.role);
+      setUsername(u.name);
+      if (u.role === 'Client Portal User') {
+        setActiveTab('directory');
+        setDrilldownPartyId('p-acme');
+      } else {
+        setActiveTab('dashboard');
+      }
+      triggerRefresh();
+    }} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 flex flex-col font-sans selection:bg-zinc-950 selection:text-white">
@@ -226,27 +267,26 @@ export default function App() {
             )}
           </div>
 
-          {/* User Role Switcher - Critical PRD Requirement */}
+          {/* Authenticated User Session Info & Reset */}
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-zinc-900 border border-zinc-850 p-1 px-2.5 rounded-lg text-xs gap-1.5 shadow-2xs">
               <UserCheck size={14} className="text-zinc-400 font-semibold" />
               <div className="text-left leading-tight">
-                <span className="text-[8px] text-zinc-500 uppercase block">Active persona</span>
-                <select 
-                  id="header-role-switcher"
-                  className="bg-transparent text-white font-bold pr-1 py-0.5 max-w-[150px] outline-hidden cursor-pointer"
-                  value={activeRole}
-                  onChange={(e) => handleRoleChange(e.target.value)}
-                >
-                  <option value="Super Admin" className="text-zinc-950">Super Admin (Continuous control)</option>
-                  <option value="Finance Manager" className="text-zinc-950">Finance Manager (Checker auth)</option>
-                  <option value="Data Entry Operator" className="text-zinc-950">Data Entry Operator (Maker draft)</option>
-                  <option value="Auditor / Read-Only" className="text-zinc-950">Auditor / Read-Only (Auditable locks)</option>
-                  <option value="Client Portal User" className="text-zinc-950">Client Portal User (Isolated Acme)</option>
-                  <option value="Executive / C-Suite" className="text-zinc-950">Executive / C-Suite (BI Widgets)</option>
-                </select>
+                <span className="text-[8px] text-zinc-500 uppercase block font-semibold text-zinc-405">Logged in</span>
+                <span className="text-white font-bold block">{currentUser.name}</span>
+                <span className="text-[9px] text-zinc-400 font-mono font-medium">{currentUser.role}</span>
               </div>
             </div>
+
+            <button 
+              id="header-logout-btn"
+              onClick={handleLogout}
+              className="p-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-zinc-350 hover:text-white rounded-lg transition-all flex items-center gap-1 cursor-pointer font-bold text-xs"
+              title="Logout Session"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
 
             <button 
               id="header-btn-reset-db"

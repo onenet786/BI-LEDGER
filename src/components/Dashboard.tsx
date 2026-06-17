@@ -10,7 +10,8 @@ import {
   handleMakerCheckerApproval, 
   getLedgerReportData, 
   getPartyRunningBalances,
-  calculateAgingOffsetInDays
+  calculateAgingOffsetInDays,
+  getCurrencySymbol
 } from '../ledgerService';
 import { Transaction, Party } from '../types';
 import { 
@@ -140,7 +141,7 @@ export default function Dashboard({
       <div id="kpi-ar" className="bg-white p-4 border border-zinc-200 rounded-lg shadow-xs flex items-center justify-between">
         <div>
           <span className="text-xs text-zinc-500 font-medium block">Total Receivables (AR)</span>
-          <span className="text-xl font-semibold text-zinc-900 mt-1 block">${totalAR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span className="text-xl font-semibold text-zinc-900 mt-1 block">{getCurrencySymbol()}{totalAR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           <span className="text-[10px] text-green-600 font-semibold mt-1 flex items-center">
             <TrendingUp size={10} className="mr-0.5" /> Credit Risk Evaluated
           </span>
@@ -153,7 +154,7 @@ export default function Dashboard({
       <div id="kpi-ap" className="bg-white p-4 border border-zinc-200 rounded-lg shadow-xs flex items-center justify-between">
         <div>
           <span className="text-xs text-zinc-500 font-medium block">Total Payables (AP)</span>
-          <span className="text-xl font-semibold text-zinc-900 mt-1 block">${totalAP.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span className="text-xl font-semibold text-zinc-900 mt-1 block">{getCurrencySymbol()}{totalAP.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           <span className="text-[10px] text-zinc-500 block mt-1">3 subcontractor contracts synced</span>
         </div>
         <div className="bg-neutral-50 p-2.5 rounded-full text-zinc-500 border border-zinc-100">
@@ -165,7 +166,7 @@ export default function Dashboard({
         <div>
           <span className="text-xs text-zinc-500 font-medium block">Net Liquidity Inflow</span>
           <span className="text-xl font-semibold text-zinc-900 mt-1 block">
-            ${(totalAR - totalAP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {getCurrencySymbol()}{(totalAR - totalAP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className={`text-[10px] font-semibold mt-1 block ${(totalAR - totalAP) > 0 ? 'text-green-600' : 'text-red-500'}`}>
             {(totalAR - totalAP) > 0 ? 'Surplus Cashflow Position' : 'Deficit Exposure Alert'}
@@ -240,7 +241,7 @@ export default function Dashboard({
                     <div className="flex flex-col gap-2 min-w-[200px]">
                       <div className="text-right">
                         <span className="text-xs text-zinc-400">Base Amount</span>
-                        <p className="text-sm font-bold text-zinc-900">${t.amountInBaseCurrency.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        <p className="text-sm font-bold text-zinc-900">{getCurrencySymbol()}{t.amountInBaseCurrency.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                       </div>
                       {isVerifier ? (
                         <div className="space-y-1.5">
@@ -320,7 +321,7 @@ export default function Dashboard({
                 </div>
                 <span className="text-[10px] text-zinc-400 font-medium block">{bar.label}</span>
                 <span className="text-xs font-bold text-zinc-900 mt-0.5 block">
-                  ${bar.amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  {getCurrencySymbol()}{bar.amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
                 <span className="text-[9px] text-zinc-400 italic font-mono">
                   {percentage.toFixed(1)}% of AR
@@ -362,7 +363,7 @@ export default function Dashboard({
                 <div key={idx} className="text-xs">
                   <div className="flex justify-between font-medium text-zinc-700 mb-1">
                     <span>{c.label} ({c.symbol})</span>
-                    <span className="font-bold">${c.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ({c.percent.toFixed(1)}%)</span>
+                    <span className="font-bold">{getCurrencySymbol()}{c.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ({c.percent.toFixed(1)}%)</span>
                   </div>
                   <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
                     <div className={`h-full ${c.color} rounded-full`} style={{ width: `${c.percent}%` }} />
@@ -423,7 +424,7 @@ export default function Dashboard({
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-red-950">${dis.amountInBaseCurrency.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-red-950">{getCurrencySymbol()}{dis.amountInBaseCurrency.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     <button 
                       id={`dispute-audit-btn-${dis.id}`}
                       onClick={() => onNavigateToParty(dis.partyId)}
@@ -521,7 +522,7 @@ export default function Dashboard({
                         <span className="font-bold text-zinc-900">{t.referenceNumber}</span> | <span className="text-[10px] text-zinc-500 font-mono">{t.transactionType}</span>
                         <span className="text-[10px] text-zinc-400 block font-light">Client: {party?.name} | Date: {t.transactionDate} | Status: <span className="font-medium text-zinc-700">{t.status}</span></span>
                       </div>
-                      <span className="font-bold text-zinc-950">${t.amountInBaseCurrency.toLocaleString()}</span>
+                      <span className="font-bold text-zinc-950">{getCurrencySymbol()}{t.amountInBaseCurrency.toLocaleString()}</span>
                     </div>
                   );
                 })}

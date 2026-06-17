@@ -8,7 +8,8 @@ import {
   getLedgerReportData, 
   getParties, 
   getTenantSettings, 
-  addAuditLog 
+  addAuditLog,
+  getCurrencySymbol
 } from '../ledgerService';
 import { Party, TenantSettings } from '../types';
 import { 
@@ -412,9 +413,9 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <th className="py-2 px-3">Reference No</th>
                         <th className="py-2 px-3">Party Name</th>
                         <th className="py-2 px-3">Taxon</th>
-                        <th className="py-2 px-3 text-right">Debit ($)</th>
-                        <th className="py-2 px-3 text-right">Credit ($)</th>
-                        <th className="py-2 px-3 text-right">Running Position ($)</th>
+                        <th className="py-2 px-3 text-right">Debit ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">Credit ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">Running Position ({getCurrencySymbol()})</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-200">
@@ -424,10 +425,10 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                           <td className="py-2 px-3 font-semibold font-mono text-zinc-900">{r.referenceNumber}</td>
                           <td className="py-2 px-3 font-medium">{r.partyName}</td>
                           <td className="py-2 px-3 uppercase text-[9px] font-bold text-zinc-500">{r.transactionType}</td>
-                          <td className="py-2 px-3 text-right font-mono text-zinc-800">{r.debit > 0 ? `$${r.debit.toLocaleString(undefined, {minimumFractionDigits:2})}` : '-'}</td>
-                          <td className="py-2 px-3 text-right font-mono text-red-700">{r.credit > 0 ? `$${r.credit.toLocaleString(undefined, {minimumFractionDigits:2})}` : '-'}</td>
+                          <td className="py-2 px-3 text-right font-mono text-zinc-800">{r.debit > 0 ? `${getCurrencySymbol()}${r.debit.toLocaleString(undefined, {minimumFractionDigits:2})}` : '-'}</td>
+                          <td className="py-2 px-3 text-right font-mono text-red-700">{r.credit > 0 ? `${getCurrencySymbol()}${r.credit.toLocaleString(undefined, {minimumFractionDigits:2})}` : '-'}</td>
                           <td className={`py-2 px-3 text-right font-mono font-bold ${r.runningBalance >= 0 ? 'text-zinc-900' : 'text-red-700'}`}>
-                            ${r.runningBalance.toLocaleString(undefined, {minimumFractionDigits:2})}
+                            {getCurrencySymbol()}{r.runningBalance.toLocaleString(undefined, {minimumFractionDigits:2})}
                           </td>
                         </tr>
                       ))}
@@ -442,12 +443,12 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                       <tr>
                         <th className="py-2 px-3">Party Name</th>
                         <th className="py-2 px-3">ID Code</th>
-                        <th className="py-2 px-3 text-right">Current ($)</th>
-                        <th className="py-2 px-3 text-right">1-30 Days ($)</th>
-                        <th className="py-2 px-3 text-right">31-60 Days ($)</th>
-                        <th className="py-2 px-3 text-right">61-90 Days ($)</th>
-                        <th className="py-2 px-3 text-right">90+ Days ($)</th>
-                        <th className="py-2 px-3 text-right">Outstanding Total ($)</th>
+                        <th className="py-2 px-3 text-right">Current ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">1-30 Days ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">31-60 Days ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">61-90 Days ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">90+ Days ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">Outstanding Total ({getCurrencySymbol()})</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-200 font-mono">
@@ -455,12 +456,12 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <tr key={i} className="hover:bg-zinc-50">
                           <td className="py-2.5 px-3 font-sans font-bold text-zinc-900">{r.partyName}</td>
                           <td className="py-2.5 px-3 text-zinc-400 uppercase text-[10px]">{r.partyCode}</td>
-                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">${r.current.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">${r.b1_30.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">${r.b31_60.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">${r.b61_90.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                          <td className="py-2.5 px-3 text-right font-medium text-red-750">${r.b91_plus.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                          <td className="py-2.5 px-3 text-right font-bold text-zinc-900 border-l border-zinc-150">${r.total.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">{getCurrencySymbol()}{r.current.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">{getCurrencySymbol()}{r.b1_30.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">{getCurrencySymbol()}{r.b31_60.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                          <td className="py-2.5 px-3 text-right font-medium text-zinc-700">{getCurrencySymbol()}{r.b61_90.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                          <td className="py-2.5 px-3 text-right font-medium text-red-750">{getCurrencySymbol()}{r.b91_plus.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                          <td className="py-2.5 px-3 text-right font-bold text-zinc-900 border-l border-zinc-150">{getCurrencySymbol()}{r.total.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -474,9 +475,9 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                       <tr>
                         <th className="py-2.5 px-3">Party Name</th>
                         <th className="py-2.5 px-3">Category Tag</th>
-                        <th className="py-2.5 px-3 text-right">Receivables Asset ($)</th>
-                        <th className="py-2.5 px-3 text-right">Payables Liability ($)</th>
-                        <th className="py-2.5 px-3 text-right font-bold">Net Position ($)</th>
+                        <th className="py-2.5 px-3 text-right">Receivables Asset ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right">Payables Liability ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right font-bold">Net Position ({getCurrencySymbol()})</th>
                         <th className="py-2.5 px-3">Status</th>
                       </tr>
                     </thead>
@@ -485,10 +486,10 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <tr key={i} className="hover:bg-zinc-50">
                           <td className="py-2.5 px-3 font-sans font-bold text-zinc-900">{r.partyName}</td>
                           <td className="py-2.5 px-3 font-sans text-zinc-500 uppercase text-[9px]">{r.partyType}</td>
-                          <td className="py-2.5 px-3 text-right text-zinc-700">${r.receivable.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                          <td className="py-2.5 px-3 text-right text-red-700">${r.payable.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right text-zinc-700">{getCurrencySymbol()}{r.receivable.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right text-red-700">{getCurrencySymbol()}{r.payable.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                           <td className={`py-2.5 px-3 text-right font-extrabold ${r.netPosition >= 0 ? 'text-zinc-900' : 'text-red-700'}`}>
-                            ${(r.receivable - r.payable).toLocaleString(undefined, {minimumFractionDigits:2})}
+                            {getCurrencySymbol()}{(r.receivable - r.payable).toLocaleString(undefined, {minimumFractionDigits:2})}
                           </td>
                           <td className="py-2.5 px-3 uppercase text-[9px] font-sans">{r.status}</td>
                         </tr>
@@ -503,19 +504,19 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                     <thead className="bg-zinc-50 border-b border-zinc-100 text-[10px] text-zinc-450 uppercase font-mono">
                       <tr>
                         <th className="py-2.5 px-3">Party Name</th>
-                        <th className="py-2.5 px-3 text-right">Inflows Collected ($)</th>
-                        <th className="py-2.5 px-3 text-right">Outflows Remitted ($)</th>
-                        <th className="py-2.5 px-3 text-right font-bold">Net Cash Flow ($)</th>
+                        <th className="py-2.5 px-3 text-right">Inflows Collected ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right">Outflows Remitted ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right font-bold">Net Cash Flow ({getCurrencySymbol()})</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-150 font-mono">
                       {reportRows.map((r, i) => (
                         <tr key={i} className="hover:bg-zinc-50">
                           <td className="py-2.5 px-3 font-sans font-bold">{r.partyName}</td>
-                          <td className="py-2.5 px-3 text-right text-green-700">${r.inflow.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                          <td className="py-2.5 px-3 text-right text-red-700">${r.outflow.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right text-green-700">{getCurrencySymbol()}{r.inflow.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right text-red-700">{getCurrencySymbol()}{r.outflow.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                           <td className={`py-2.5 px-3 text-right font-extrabold ${r.netCashFlow >= 0 ? 'text-green-800' : 'text-red-800'}`}>
-                            ${r.netCashFlow.toLocaleString(undefined, {minimumFractionDigits:2})}
+                            {getCurrencySymbol()}{r.netCashFlow.toLocaleString(undefined, {minimumFractionDigits:2})}
                           </td>
                         </tr>
                       ))}
@@ -533,7 +534,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <th className="py-2 px-3">Party Name</th>
                         <th className="py-2 px-3 text-right">Gross Amount</th>
                         <th className="py-2 px-3 text-right">Withholding Rate</th>
-                        <th className="py-2 px-3 text-right">Tax Withheld ($)</th>
+                        <th className="py-2 px-3 text-right">Tax Withheld ({getCurrencySymbol()})</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-150 font-mono">
@@ -542,9 +543,9 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                           <td className="py-2 px-3 font-semibold text-zinc-900">{r.referenceNumber}</td>
                           <td className="py-2 px-3 text-zinc-500 font-mono">{r.taxId}</td>
                           <td className="py-2 px-3 font-sans font-bold">{r.partyName}</td>
-                          <td className="py-2 px-3 text-right">${r.totalAmount.toLocaleString()}</td>
+                          <td className="py-2 px-3 text-right">{getCurrencySymbol()}{r.totalAmount.toLocaleString()}</td>
                           <td className="py-2 px-3 text-right">{r.tdsRate}%</td>
-                          <td className="py-2 px-3 text-right text-red-650 font-bold">${r.tdsWithheld.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2 px-3 text-right text-red-650 font-bold">{getCurrencySymbol()}{r.tdsWithheld.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -562,7 +563,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <th className="py-2 px-3 text-right">Origin face</th>
                         <th className="py-2 px-3 text-right">Book Rate</th>
                         <th className="py-2 px-3 text-right">Current Rate</th>
-                        <th className="py-2 px-3 text-right font-bold">Unrealized Gain/Loss ($)</th>
+                        <th className="py-2 px-3 text-right font-bold">Unrealized Gain/Loss ({getCurrencySymbol()})</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-200 font-mono">
@@ -575,7 +576,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                           <td className="py-2 px-3 text-right">{r.postedRate.toFixed(4)}</td>
                           <td className="py-2 px-3 text-right text-orange-650">{r.currentRate.toFixed(4)}</td>
                           <td className={`py-2 px-3 text-right font-extrabold ${r.gainLoss >= 0 ? 'text-green-700' : 'text-red-750'}`}>
-                            ${r.gainLoss.toLocaleString(undefined, {minimumFractionDigits:2})}
+                            {getCurrencySymbol()}{r.gainLoss.toLocaleString(undefined, {minimumFractionDigits:2})}
                           </td>
                         </tr>
                       ))}
@@ -591,7 +592,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <th className="py-2.5 px-3">Voucher Ref</th>
                         <th className="py-2.5 px-3">Party Name</th>
                         <th className="py-2.5 px-3">Authorized Date</th>
-                        <th className="py-2.5 px-3 text-right">Written-off amount ($)</th>
+                        <th className="py-2.5 px-3 text-right">Written-off amount ({getCurrencySymbol()})</th>
                         <th className="py-2.5 px-3">Audit Inspector</th>
                         <th className="py-2.5 px-3">Legal Justification Comment</th>
                       </tr>
@@ -602,7 +603,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                           <td className="py-2.5 px-3 font-semibold font-mono">{r.referenceNumber}</td>
                           <td className="py-2.5 px-3 font-bold">{r.partyName}</td>
                           <td className="py-2.5 px-3 font-mono">{r.writeOffDate}</td>
-                          <td className="py-2.5 px-3 text-right font-mono font-extrabold">${r.amount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-extrabold">{getCurrencySymbol()}{r.amount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                           <td className="py-2.5 px-3">{r.authorizer}</td>
                           <td className="py-2.5 px-3 italic font-light">" {r.reason} "</td>
                         </tr>
@@ -620,7 +621,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <th className="py-2.5 px-3">Date</th>
                         <th className="py-2.5 px-3">Party Name</th>
                         <th className="py-2.5 px-3 text-right">Offset Face</th>
-                        <th className="py-2.5 px-3 text-right">Offset Value ($)</th>
+                        <th className="py-2.5 px-3 text-right">Offset Value ({getCurrencySymbol()})</th>
                         <th className="py-2.5 px-3">Authorized Person</th>
                         <th className="py-2.5 px-3">Rec reciprocol ledger offset comments</th>
                       </tr>
@@ -632,7 +633,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                           <td className="py-2.5 px-3 font-mono">{r.transactionDate}</td>
                           <td className="py-2.5 px-3 font-bold">{r.partyName}</td>
                           <td className="py-2.5 px-3 text-right font-mono">{r.offsetAmtTxn.toLocaleString()}</td>
-                          <td className="py-2.5 px-3 text-right font-mono font-extrabold text-green-750">${r.offsetAmtBase.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-extrabold text-green-750">{getCurrencySymbol()}{r.offsetAmtBase.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
                           <td className="py-2.5 px-3">{r.operator}</td>
                           <td className="py-2.5 px-3 italic text-[11px] text-zinc-650">" {r.notes} "</td>
                         </tr>
@@ -647,10 +648,10 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                     <thead className="bg-zinc-50 border-b border-zinc-200 text-[10px] text-zinc-450 uppercase font-mono">
                       <tr>
                         <th className="py-2 px-3">Party Name</th>
-                        <th className="py-2 px-3 text-right">Gross revenue billed ($)</th>
-                        <th className="py-2 px-3 text-right">pass-through subcontractor expenses ($)</th>
-                        <th className="py-2 px-3 text-right">Reimbursable Travel costs ($)</th>
-                        <th className="py-2 px-3 text-right font-bold">Net Profit Margin ($)</th>
+                        <th className="py-2 px-3 text-right">Gross revenue billed ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">pass-through subcontractor expenses ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right">Reimbursable Travel costs ({getCurrencySymbol()})</th>
+                        <th className="py-2 px-3 text-right font-bold">Net Profit Margin ({getCurrencySymbol()})</th>
                         <th className="py-2 px-3 text-right">Profit Index (%)</th>
                       </tr>
                     </thead>
@@ -658,10 +659,10 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                       {reportRows.map((r, i) => (
                         <tr key={i} className="hover:bg-zinc-50">
                           <td className="py-3 px-3 font-sans font-extrabold text-zinc-900">{r.partyName}</td>
-                          <td className="py-3 px-3 text-right text-green-700">${r.revenue.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right text-red-700">${(r.expense - r.reimbursable).toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right text-zinc-500">${r.reimbursable.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right font-extrabold text-zinc-900 border-l">${r.profit.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-3 px-3 text-right text-green-700">{getCurrencySymbol()}{r.revenue.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right text-red-700">{getCurrencySymbol()}{(r.expense - r.reimbursable).toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right text-zinc-500">{getCurrencySymbol()}{r.reimbursable.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right font-extrabold text-zinc-900 border-l">{getCurrencySymbol()}{r.profit.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                           <td className="py-3 px-3 text-right">
                             <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${r.margin > 40 ? 'bg-green-150 text-green-800' : 'bg-orange-100 text-orange-850'}`}>
                               {r.margin.toFixed(1)}% Ratio
@@ -679,9 +680,9 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                     <thead className="bg-zinc-50 border-b border-zinc-200 text-[10px] text-zinc-450 uppercase font-mono">
                       <tr>
                         <th className="py-2.5 px-3">Party Name</th>
-                        <th className="py-2.5 px-3 text-right">Advances Collected ($)</th>
-                        <th className="py-2.5 px-3 text-right">consumed billed milestones ($)</th>
-                        <th className="py-2.5 px-3 text-right font-bold">Unutilized balance liability ($)</th>
+                        <th className="py-2.5 px-3 text-right">Advances Collected ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right">consumed billed milestones ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right font-bold">Unutilized balance liability ({getCurrencySymbol()})</th>
                         <th className="py-2.5 px-3 text-right">Consumption Ratio (%)</th>
                       </tr>
                     </thead>
@@ -689,9 +690,9 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                       {reportRows.map((r, i) => (
                         <tr key={i} className="hover:bg-zinc-50">
                           <td className="py-3 px-3 font-sans font-bold">{r.partyName}</td>
-                          <td className="py-3 px-3 text-right text-zinc-900">${r.collected.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right text-zinc-650">${r.utilized.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right font-extrabold text-amber-700">${r.unutilized.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                          <td className="py-3 px-3 text-right text-zinc-900">{getCurrencySymbol()}{r.collected.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right text-zinc-650">{getCurrencySymbol()}{r.utilized.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right font-extrabold text-amber-700">{getCurrencySymbol()}{r.unutilized.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
                           <td className="py-3 px-3 text-right font-bold text-zinc-900">{r.rate.toFixed(1)}% Utilized</td>
                         </tr>
                       ))}
@@ -737,10 +738,10 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                     <thead className="bg-zinc-50 border-b border-zinc-200 text-[10px] text-zinc-450 uppercase font-mono">
                       <tr>
                         <th className="py-2.5 px-3">Party Name</th>
-                        <th className="py-2.5 px-3 text-right">Outstanding Receivables ($)</th>
-                        <th className="py-2.5 px-3 text-right">Active unbilled milestones ($)</th>
-                        <th className="py-2.5 px-3 text-right font-bold">Total Weighted Exposure ($)</th>
-                        <th className="py-2.5 px-3 text-right">Consolidated limits ($)</th>
+                        <th className="py-2.5 px-3 text-right">Outstanding Receivables ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right">Active unbilled milestones ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right font-bold">Total Weighted Exposure ({getCurrencySymbol()})</th>
+                        <th className="py-2.5 px-3 text-right">Consolidated limits ({getCurrencySymbol()})</th>
                         <th className="py-2.5 px-3">Risk Assessment</th>
                       </tr>
                     </thead>
@@ -748,10 +749,10 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                       {reportRows.map((r, i) => (
                         <tr key={i} className="hover:bg-zinc-50">
                           <td className="py-3 px-3 font-sans font-extrabold">{r.partyName}</td>
-                          <td className="py-3 px-3 text-right">${r.outstandingAr.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right">${r.unbilledMilestones.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right font-extrabold text-zinc-950">${r.totalExposure.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right text-zinc-500">${r.creditLimit.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right">{getCurrencySymbol()}{r.outstandingAr.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right">{getCurrencySymbol()}{r.unbilledMilestones.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right font-extrabold text-zinc-950">{getCurrencySymbol()}{r.totalExposure.toLocaleString()}</td>
+                          <td className="py-3 px-3 text-right text-zinc-500">{getCurrencySymbol()}{r.creditLimit.toLocaleString()}</td>
                           <td className="py-3 px-3">
                             <span className={`px-2.5 py-0.5 rounded-full border text-[9px] font-extrabold uppercase ${
                               r.riskFlag === 'SAFE' ? 'bg-green-50 text-green-700 border-green-200' :
@@ -774,7 +775,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                         <th className="py-2.5 px-3">Ref No</th>
                         <th className="py-2.5 px-3">Date</th>
                         <th className="py-2.5 px-3">Party Name</th>
-                        <th className="py-2.5 px-3 text-right">Disputed Face value ($)</th>
+                        <th className="py-2.5 px-3 text-right">Disputed Face value ({getCurrencySymbol()})</th>
                         <th className="py-2.5 px-3 text-right">Dispute Age (Days)</th>
                         <th className="py-2.5 px-3">Resolution Ledger Status comments</th>
                       </tr>
@@ -785,7 +786,7 @@ export default function Reports({ username, refreshTrigger }: ReportsProps) {
                           <td className="py-3 px-3 font-semibold">{r.referenceNumber}</td>
                           <td className="py-3 px-3">{r.transactionDate}</td>
                           <td className="py-3 px-3 font-sans font-bold">{r.partyName}</td>
-                          <td className="py-3 px-3 text-right font-extrabold">${r.amountUSD.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                          <td className="py-3 px-3 text-right font-extrabold">{getCurrencySymbol()}{r.amountUSD.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
                           <td className="py-3 px-3 text-right text-red-650 font-bold">{r.disputeAgeDays} Days open</td>
                           <td className="py-3 px-3 italic font-sans text-xs text-zinc-650">" {r.approverComments} "</td>
                         </tr>

@@ -13,7 +13,8 @@ import {
   computeContraLimits,
   reverseTransaction,
   writeOffBadDebt,
-  addAuditLog
+  addAuditLog,
+  getCurrencySymbol
 } from '../ledgerService';
 import { Party, Transaction, Contact, AuditNote, PartyDocument } from '../types';
 import { 
@@ -257,7 +258,7 @@ export default function PartyProfile({
       performContraEntry(party.id, amount, username, 'Profile mutual balancing trigger');
       setContraOffsetAmount('');
       triggerRefresh();
-      alert(`Success: Contra entry applied successfully. Receivable and Payable adjusted mutually by $${amount.toFixed(2)}.`);
+      alert(`Success: Contra entry applied successfully. Receivable and Payable adjusted mutually by ${getCurrencySymbol()}${amount.toFixed(2)}.`);
     } catch (err: any) {
       alert(err.message);
     }
@@ -325,7 +326,7 @@ export default function PartyProfile({
         <div className="bg-zinc-50 p-3.5 border border-zinc-200 rounded-lg">
           <span className="text-[10px] text-zinc-500 font-semibold block uppercase">Client Receivables (OWED TO US)</span>
           <span className="text-xl font-bold text-zinc-900 mt-1 block">
-            ${balances.runningReceivables.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {getCurrencySymbol()}{balances.runningReceivables.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[9px] text-zinc-400 block mt-1">Sum of invoices, retainers, and client ledger offsets</span>
         </div>
@@ -333,7 +334,7 @@ export default function PartyProfile({
         <div className="bg-zinc-50 p-3.5 border border-zinc-200 rounded-lg">
           <span className="text-[10px] text-zinc-500 font-semibold block uppercase">Vendor Payables (WE OWE THEM)</span>
           <span className="text-xl font-bold text-zinc-900 mt-1 block">
-            ${balances.runningPayables.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {getCurrencySymbol()}{balances.runningPayables.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[9px] text-zinc-400 block mt-1">Sum of recorded subcontractor bills and outgoing payments</span>
         </div>
@@ -342,7 +343,7 @@ export default function PartyProfile({
           <div>
             <span className="text-[10px] text-zinc-500 font-semibold block uppercase">Net Exposure Balance</span>
             <span className="text-xl font-semibold text-zinc-900 mt-1 block">
-              ${(balances.runningReceivables - balances.runningPayables).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {getCurrencySymbol()}{(balances.runningReceivables - balances.runningPayables).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
           <span className="text-[9px] text-zinc-400 text-right font-mono block mt-2">
@@ -441,7 +442,7 @@ export default function PartyProfile({
                       <th className="py-2.5 px-3">Reference No</th>
                       <th className="py-2.5 px-3">Transaction Type</th>
                       <th className="py-2.5 px-3 text-right">Original Tx Amount</th>
-                      <th className="py-2.5 px-3 text-right">Base Equivalent ($)</th>
+                      <th className="py-2.5 px-3 text-right">Base Equivalent ({getCurrencySymbol()})</th>
                       <th className="py-2.5 px-3">State</th>
                       <th className="py-2.5 px-3 text-right">Actions</th>
                     </tr>
@@ -474,9 +475,9 @@ export default function PartyProfile({
                             )}
                           </td>
                           <td className={`py-3 px-3 text-right font-mono font-semibold ${t.amountInBaseCurrency > 0 ? 'text-zinc-900' : 'text-red-700'}`}>
-                            ${t.amountInBaseCurrency.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {getCurrencySymbol()}{t.amountInBaseCurrency.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             {t.tdsAmount > 0 && (
-                              <span className="text-[9px] text-red-500 block mt-0.5">TDS Withheld: ${t.tdsAmount}</span>
+                              <span className="text-[9px] text-red-500 block mt-0.5">TDS Withheld: {getCurrencySymbol()}{t.tdsAmount}</span>
                             )}
                           </td>
                           <td className="py-3 px-3">
@@ -551,7 +552,7 @@ export default function PartyProfile({
                         <h4 className="text-sm font-bold text-zinc-900 mt-1 flex items-center gap-1.5">
                           <CheckCircle className="text-green-500" size={14} /> {proj.name}
                         </h4>
-                        <span className="text-zinc-550 block mt-1.5">Consolidated Value: <strong>${totalSpentValue.toLocaleString()}</strong></span>
+                        <span className="text-zinc-550 block mt-1.5">Consolidated Value: <strong>{getCurrencySymbol()}{totalSpentValue.toLocaleString()}</strong></span>
                       </div>
                       <div className="flex flex-col justify-center">
                         <span className="text-[10px] text-zinc-400 uppercase font-mono tracking-widest block">Billed Progress Gauge</span>
@@ -569,7 +570,7 @@ export default function PartyProfile({
                             <div key={m.id} className="flex justify-between items-center text-[10px] border-b border-zinc-100 pb-1">
                               <span className="text-zinc-700 font-medium">{m.name}</span>
                               <span className="flex items-center gap-1">
-                                <strong className="text-zinc-900">${m.amount.toLocaleString()}</strong>
+                                <strong className="text-zinc-900">{getCurrencySymbol()}{m.amount.toLocaleString()}</strong>
                                 <span className={`text-[8px] font-bold px-1.5 rounded uppercase ${m.status === 'billed' ? 'bg-zinc-900 text-white' : 'bg-neutral-100 text-neutral-500'}`}>{m.status}</span>
                               </span>
                             </div>
@@ -782,7 +783,7 @@ export default function PartyProfile({
                   <div className="bg-zinc-50 p-4 border border-zinc-200 rounded-lg flex flex-col justify-between text-xs min-h-[140px]">
                     <div>
                       <span className="text-[10px] text-zinc-400 uppercase font-mono tracking-wider font-extrabold block">Collected Advances</span>
-                      <p className="text-2xl font-bold text-zinc-900 mt-2">${totalCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-2xl font-bold text-zinc-900 mt-2">{getCurrencySymbol()}{totalCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                     </div>
                     <span className="text-[9px] text-zinc-400 font-medium block">Inflows received prior to invoice generation</span>
                   </div>
@@ -790,7 +791,7 @@ export default function PartyProfile({
                   <div className="bg-zinc-50 p-4 border border-zinc-200 rounded-lg flex flex-col justify-between text-xs min-h-[140px]">
                     <div>
                       <span className="text-[10px] text-zinc-400 uppercase font-mono tracking-wider font-extrabold block">Consumed Balance</span>
-                      <p className="text-2xl font-bold text-zinc-900 mt-2">${totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-2xl font-bold text-zinc-900 mt-2">{getCurrencySymbol()}{totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                     </div>
                     <span className="text-[9px] text-zinc-400 font-medium block">Debited against issued milestone invoices</span>
                   </div>
@@ -798,7 +799,7 @@ export default function PartyProfile({
                   <div className="bg-zinc-50 p-4 border border-zinc-200 rounded-lg flex flex-col justify-between text-xs min-h-[140px]">
                     <div>
                       <span className="text-[10px] text-zinc-400 uppercase font-mono tracking-wider font-extrabold block">Unutilized Balance (Liability)</span>
-                      <p className="text-2xl font-bold text-zinc-900 mt-2">${remaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-2xl font-bold text-zinc-900 mt-2">{getCurrencySymbol()}{remaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                     </div>
                     <span className="text-[9px] text-zinc-400 font-medium block">Unconsumed deposit representing cash liability</span>
                   </div>
@@ -847,20 +848,20 @@ export default function PartyProfile({
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-zinc-50 border p-3 rounded-lg">
                       <span className="text-[10px] text-zinc-400 uppercase font-bold block">Current Ledger Receivables</span>
-                      <p className="text-base font-bold text-zinc-900 mt-1">${outstandingAr.toLocaleString()}</p>
+                      <p className="text-base font-bold text-zinc-900 mt-1">{getCurrencySymbol()}{outstandingAr.toLocaleString()}</p>
                     </div>
                     <div className="bg-zinc-50 border p-3 rounded-lg">
                       <span className="text-[10px] text-zinc-400 uppercase font-bold block">Unbilled Milestones (Active PM)</span>
-                      <p className="text-base font-bold text-zinc-900 mt-1">${unbilledMilestonesValue.toLocaleString()}</p>
+                      <p className="text-base font-bold text-zinc-900 mt-1">{getCurrencySymbol()}{unbilledMilestonesValue.toLocaleString()}</p>
                     </div>
                     <div className="bg-zinc-50 border p-3 rounded-lg">
                       <span className="text-[10px] text-zinc-400 uppercase font-bold block">Total Weighted Exposure</span>
-                      <p className="text-base font-bold text-zinc-900 mt-1">${totalExposure.toLocaleString()}</p>
+                      <p className="text-base font-bold text-zinc-900 mt-1">{getCurrencySymbol()}{totalExposure.toLocaleString()}</p>
                     </div>
                     <div className="bg-zinc-50 border p-3 rounded-lg">
                       <span className="text-[10px] text-zinc-400 uppercase font-bold block">Consolidated Credit Limit</span>
                       <p className="text-base font-bold text-zinc-900 mt-1">
-                        {party.creditLimit > 0 ? `$${party.creditLimit.toLocaleString()}` : 'No credit allowed'}
+                        {party.creditLimit > 0 ? `${getCurrencySymbol()}${party.creditLimit.toLocaleString()}` : 'No credit allowed'}
                       </p>
                     </div>
                   </div>
@@ -902,15 +903,15 @@ export default function PartyProfile({
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-zinc-205 pt-3 text-[10px] items-end">
                         <div>
                           <span className="text-zinc-450 uppercase block">Receivables Outstanding limit</span>
-                          <span className="text-sm font-extrabold text-zinc-800 mt-1 block">${arTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                          <span className="text-sm font-extrabold text-zinc-800 mt-1 block">{getCurrencySymbol()}{arTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div>
                           <span className="text-zinc-450 uppercase block">Payables Outstanding limit</span>
-                          <span className="text-sm font-extrabold text-zinc-800 mt-1 block">${apTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                          <span className="text-sm font-extrabold text-zinc-800 mt-1 block">{getCurrencySymbol()}{apTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div>
                           <span className="text-zinc-450 uppercase block">Lesser Maximum Limit (Available Offset)</span>
-                          <span className="text-sm font-bold text-zinc-900 mt-1 block bg-neutral-100 p-1 rounded-sm">${Math.min(arTotal, apTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                          <span className="text-sm font-bold text-zinc-900 mt-1 block bg-neutral-100 p-1 rounded-sm">{getCurrencySymbol()}{Math.min(arTotal, apTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
 
                         {Math.min(arTotal, apTotal) > 0 ? (
@@ -955,7 +956,7 @@ export default function PartyProfile({
                       </p>
                       <form onSubmit={handleWriteOff} className="flex gap-2 items-end flex-wrap">
                         <div className="text-xs">
-                          <label className="text-[10px] text-red-900 block mb-1 font-semibold">Write-off USD Amount *</label>
+                          <label className="text-[10px] text-red-900 block mb-1 font-semibold">Write-off {getCurrencySymbol()} Amount *</label>
                           <input 
                             type="number" 
                             required 
@@ -963,7 +964,7 @@ export default function PartyProfile({
                             step="0.01" 
                             max={outstandingAr}
                             className="p-2 border border-red-300 rounded bg-white text-xs w-[120px]"
-                            placeholder={`Max ${outstandingAr.toFixed(2)}`}
+                            placeholder={`Max ${getCurrencySymbol()}${outstandingAr.toFixed(2)}`}
                             value={writeOffAmount}
                             onChange={(e) => setWriteOffAmount(e.target.value)}
                           />
